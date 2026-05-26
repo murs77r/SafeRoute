@@ -55,7 +55,9 @@ if ($acao == "cadastro") {
             erro("Falha ao preparar consulta");
         }
 
-        $stmt->bind_param("ss", $email, $senha);
+        $senha_hash = hash("sha256", $senha);
+
+        $stmt->bind_param("ss", $email, $senha_hash);
         if ($stmt->execute()) {
             echo json_encode(["status" => "sucesso"]);
         } else {
