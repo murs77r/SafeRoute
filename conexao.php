@@ -2,10 +2,10 @@
 
 $host = 'localhost';
 $usuario = 'root';
-$senha = '';
+$db_senha = 'senac';
 $banco = 'saferoute';
 
-$conn = new mysqli($host, $usuario, $senha, $banco);
+$conn = new mysqli($host, $usuario, $db_senha, $banco);
 
 if ($conn->connect_error) {
     die('Erro na conexão: ' . $conn->connect_error);
