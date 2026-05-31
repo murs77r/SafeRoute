@@ -1,19 +1,16 @@
-CREATE DATABASE IF NOT EXISTS saferoute;
-USE saferoute;
+create database saferoute;
+use saferoute;
 
-CREATE TABLE IF NOT EXISTS usuarios (
-    id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    email VARCHAR(150) NOT NULL,
-    senha VARCHAR(255) NOT NULL,
-    UNIQUE KEY uq_usuarios_email (email)
+create table usuario (
+    id int not null primary key AUTO_INCREMENT,
+    email varchar(150) not null,
+    senha varchar(255) not null
 );
 
-CREATE TABLE IF NOT EXISTS eventos (
-    id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    usuario_id INT NOT NULL,
-    nome_disciplina VARCHAR(100) NOT NULL,
-    descricao_atividade VARCHAR(150) NOT NULL,
-    data_entrega DATE NOT NULL,
-    CONSTRAINT fk_eventos_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE,
-    INDEX idx_eventos_usuario_data (usuario_id, data_entrega)
+create table evento (
+    id int not null primary key AUTO_INCREMENT,
+    id_usuario int not null,
+    nome_disciplina varchar(100) not null,
+    descricao_atividade varchar(150) not null,
+    data_entrega date not null
 );
