@@ -1,8 +1,9 @@
 <?php
 header("Content-Type: application/json");
 
-include "conexao.php";
 include "funcoes.php";
+habilitar_cors_livre();
+include "conexao.php";
 
 exigir_metodo("POST");
 $data = obter_json_body();
