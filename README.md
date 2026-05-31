@@ -52,7 +52,62 @@ Resposta de sucesso (201):
 ```json
 {
 	"status": "sucesso",
-	"mensagem": "Evento cadastrado com sucesso.",
+	"mensagem": "Evento salvo com sucesso.",
+	"evento_id": 45
+}
+```
+
+### POST /editar_evento
+
+Body JSON:
+
+```json
+{
+	"evento_id": 45,
+	"usuario_id": 12,
+	"nome_disciplina": "Estrutura de Dados",
+	"descricao_atividade": "Prova remarcada para sexta",
+	"data_entrega": "2026-06-03"
+}
+```
+
+Compatibilidade:
+
+- aceita `evento_id` ou `id_evento`
+- aceita `usuario_id` ou `id_usuario`
+
+Resposta de sucesso (200):
+
+```json
+{
+	"status": "sucesso",
+	"mensagem": "Evento atualizado com sucesso.",
+	"evento_id": 45
+}
+```
+
+### POST /excluir_evento
+
+Body JSON:
+
+```json
+{
+	"evento_id": 45,
+	"usuario_id": 12
+}
+```
+
+Compatibilidade:
+
+- aceita `evento_id` ou `id_evento`
+- aceita `usuario_id` ou `id_usuario`
+
+Resposta de sucesso (200):
+
+```json
+{
+	"status": "sucesso",
+	"mensagem": "Evento excluido com sucesso.",
 	"evento_id": 45
 }
 ```

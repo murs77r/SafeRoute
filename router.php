@@ -22,6 +22,10 @@ $rotas = [
     '/auth.php' => 'auth.php',
     '/salvar_evento' => 'salvar_evento.php',
     '/salvar_evento.php' => 'salvar_evento.php',
+    '/editar_evento' => 'editar_evento.php',
+    '/editar_evento.php' => 'editar_evento.php',
+    '/excluir_evento' => 'excluir_evento.php',
+    '/excluir_evento.php' => 'excluir_evento.php',
     '/listar_eventos' => 'listar_eventos.php',
     '/listar_eventos.php' => 'listar_eventos.php'
 ];
