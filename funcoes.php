@@ -1,9 +1,39 @@
 <?php
-function erro($mensagem) {
-    echo json_encode([
+function responder_json($codigo, $payload) {
+    http_response_code($codigo);
+    echo json_encode($payload);
+    exit;
+}
+
+function sucesso($mensagem, $dados = [], $codigo = 200) {
+    responder_json($codigo, array_merge([
+        "status" => "sucesso",
+        "mensagem" => $mensagem
+    ], $dados));
+}
+
+function erro($mensagem, $codigo = 400) {
+    responder_json($codigo, [
         "status" => "erro",
         "mensagem" => $mensagem
     ]);
+}
+
+function exigir_metodo($metodo) {
+    if ($_SERVER["REQUEST_METHOD"] !== $metodo) {
+        erro("Metodo HTTP nao permitido.", 405);
+    }
+}
+
+function obter_json_body() {
+    $conteudo = file_get_contents("php://input");
+    $dados = json_decode($conteudo, true);
+
+    if (!is_array($dados)) {
+        erro("JSON invalido no corpo da requisicao.", 400);
+    }
+
+    return $dados;
 }
 
 function sair($con) {
