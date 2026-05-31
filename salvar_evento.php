@@ -1,52 +1,41 @@
 <?php
-header("Content-Type: application/json");
+header("Content-Type: application/json; charset=UTF-8");
 
-include "funcoes.php";
-habilitar_cors_livre();
 include "conexao.php";
+include "funcoes.php";
 
-exigir_metodo("POST");
-$data = obter_json_body();
+$data = json_decode(file_get_contents("php://input"), true);
 
-$usuario_id = isset($data["usuario_id"]) ? (int)$data["usuario_id"] : 0;
-$nome_disciplina = isset($data["nome_disciplina"]) ? trim((string)$data["nome_disciplina"]) : "";
-$descricao_atividade = isset($data["descricao_atividade"]) ? trim((string)$data["descricao_atividade"]) : "";
-$data_entrega = isset($data["data_entrega"]) ? trim((string)$data["data_entrega"]) : "";
+$id_usuario = isset($data["id_usuario"]) ? $data["id_usuario"] : null;
+$nome_disciplina = isset($data["nome_disciplina"]) ? $data["nome_disciplina"] : null;
+$descricao_atividade = isset($data["descricao_atividade"]) ? $data["descricao_atividade"] : null;
+$data_entrega = isset($data["data_entrega"]) ? $data["data_entrega"] : null;
 
-if ($usuario_id <= 0 || $nome_disciplina === "" || $descricao_atividade === "" || $data_entrega === "") {
+function cadastrarEvento($id_usuario, $nome_disciplina, $descricao_atividade, $data_entrega) {
+    global $conn;
+
+    $stmt = $conn->prepare("INSERT INTO evento (id_usuario, nome_disciplina, descricao_atividade, data_entrega) VALUES (?, ?, ?, ?)");
+
+    if (!$stmt) {
+        erro("Falha ao preparar consulta", 500);
+        sair($conn);
+    }
+
+    $stmt->bind_param("isss", $id_usuario, $nome_disciplina, $descricao_atividade, $data_entrega);
+
+    if ($stmt->execute()) {
+        echo json_encode([
+            "status" => "sucesso",
+            "mensagem" => "Evento cadastrado com sucesso",
+            "evento_id" => $stmt->insert_id
+        ]);
+    } else {
+        erro("Falha ao cadastrar evento", 500);
+    }
+}
+
+if ($id_usuario && $nome_disciplina && $descricao_atividade && $data_entrega) {
+    cadastrarEvento($id_usuario, $nome_disciplina, $descricao_atividade, $data_entrega);
+} else {
     erro("Falha ao salvar o evento. Dados incompletos.", 400);
 }
-
-$formato_valido = preg_match('/^\d{4}-\d{2}-\d{2}$/', $data_entrega) === 1;
-if (!$formato_valido) {
-    erro("Falha ao salvar o evento. Dados incompletos.", 400);
-}
-
-$validar_usuario = $conn->prepare("SELECT id FROM usuarios WHERE id = ? LIMIT 1");
-if (!$validar_usuario) {
-    erro("Falha ao salvar o evento. Dados incompletos.", 500);
-}
-
-$validar_usuario->bind_param("i", $usuario_id);
-$validar_usuario->execute();
-$res_usuario = $validar_usuario->get_result();
-if (!$res_usuario || $res_usuario->num_rows === 0) {
-    erro("Falha ao salvar o evento. Dados incompletos.", 400);
-}
-
-$stmt = $conn->prepare(
-    "INSERT INTO eventos (usuario_id, nome_disciplina, descricao_atividade, data_entrega) VALUES (?, ?, ?, ?)"
-);
-if (!$stmt) {
-    erro("Falha ao salvar o evento. Dados incompletos.", 500);
-}
-
-$stmt->bind_param("isss", $usuario_id, $nome_disciplina, $descricao_atividade, $data_entrega);
-
-if (!$stmt->execute()) {
-    erro("Falha ao salvar o evento. Dados incompletos.", 500);
-}
-
-sucesso("Evento cadastrado com sucesso.", [
-    "evento_id" => $stmt->insert_id
-], 201);
