@@ -146,6 +146,31 @@ Execute o script `banco.sql` para criar as tabelas:
 
 - `usuarios`
 - `eventos` com relacao 1:N (`eventos.usuario_id -> usuarios.id`)
+- `requisicoes_sucesso` para auditoria de chamadas bem-sucedidas aos endpoints PHP
+
+Cada linha da tabela `requisicoes_sucesso` guarda um JSON na coluna `registro_json` com este formato:
+
+```json
+{
+	"metodo": "POST",
+	"endpoint": "/salvar_evento",
+	"status_code": 201,
+	"ip": "127.0.0.1",
+	"query_params": [],
+	"body": {
+		"usuario_id": 12,
+		"nome_disciplina": "Estrutura de Dados",
+		"descricao_atividade": "Prova com valor de 2 pontos",
+		"data_entrega": "2026-06-01"
+	},
+	"resposta": {
+		"status": "sucesso",
+		"mensagem": "Evento salvo com sucesso.",
+		"evento_id": 45
+	},
+	"registrado_em": "2026-05-31T12:00:00+00:00"
+}
+```
 
 Configuracao opcional por variaveis de ambiente (somente banco):
 
