@@ -1,86 +1,134 @@
 <?php
-header("Content-Type: application/json");
+header("Content-Type: application/json; charset=UTF-8");
 
-include "funcoes.php";
-habilitar_cors_livre();
 include "conexao.php";
+include "funcoes.php";
 
-exigir_metodo("POST");
-$data = obter_json_body();
+function buscarUsuarioPorEmail($email) {
+    global $conn;
 
-$email = isset($data["email"]) ? trim((string)$data["email"]) : "";
-$senha = isset($data["senha"]) ? (string)$data["senha"] : "";
-$acao = isset($data["acao"]) ? trim((string)$data["acao"]) : "";
+    $stmt = $conn->prepare("SELECT id, email FROM usuario WHERE email = ?");
 
-if ($email === "" || $senha === "" || ($acao !== "login" && $acao !== "cadastro")) {
-    erro("Dados obrigatorios ausentes ou invalidos.", 400);
-}
-
-if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    erro("E-mail invalido.", 400);
-}
-
-$stmt = $conn->prepare("SELECT id, email, senha FROM usuarios WHERE email = ? LIMIT 1");
-if (!$stmt) {
-    erro("Falha interna ao consultar usuario.", 500);
-}
-
-$stmt->bind_param("s", $email);
-$stmt->execute();
-$result = $stmt->get_result();
-$usuario = $result ? $result->fetch_assoc() : null;
-
-if ($acao === "cadastro") {
-    if ($usuario) {
-        erro("Credenciais invalidas ou e-mail ja cadastrado.", 401);
+    if (!$stmt) {
+        erro("Falha ao preparar consulta", 500);
+        sair($conn);
     }
 
-    $senha_hash = password_hash($senha, PASSWORD_DEFAULT);
-    $insert = $conn->prepare("INSERT INTO usuarios (email, senha) VALUES (?, ?)");
-    if (!$insert) {
-        erro("Falha interna ao cadastrar usuario.", 500);
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    return $result;
+}
+
+function buscarUsuarioPorEmailESenha($email, $senha) {
+    global $conn;
+
+    $stmt = $conn->prepare("SELECT id, email FROM usuario WHERE email = ? AND senha = ?");
+
+    if (!$stmt) {
+        erro("Falha ao preparar consulta", 500);
+        sair($conn);
     }
 
-    $insert->bind_param("ss", $email, $senha_hash);
-    if (!$insert->execute()) {
-        erro("Credenciais invalidas ou e-mail ja cadastrado.", 400);
-    }
+    $senha_hash = hash("sha256", $senha);
 
-    sucesso("Autenticacao realizada com sucesso", [
+    $stmt->bind_param("ss", $email, $senha_hash);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    return $result;
+}
+
+function respostaLogin($row) {
+    http_response_code(200);
+    return json_encode([
+        "status" => "sucesso",
+        "mensagem" => "Autenticação realizada com sucesso",
         "usuario" => [
-            "id" => $insert->insert_id,
-            "email" => $email
+            "id" => $row["id"],
+            "email" => $row["email"]
         ]
-    ], 200);
+    ]);
 }
 
-if (!$usuario) {
-    $senha_hash = password_hash($senha, PASSWORD_DEFAULT);
-    $insert = $conn->prepare("INSERT INTO usuarios (email, senha) VALUES (?, ?)");
-    if (!$insert) {
-        erro("Falha interna ao cadastrar usuario.", 500);
-    }
-
-    $insert->bind_param("ss", $email, $senha_hash);
-    if (!$insert->execute()) {
-        erro("Credenciais invalidas ou e-mail ja cadastrado.", 400);
-    }
-
-    sucesso("Autenticacao realizada com sucesso", [
+function respostaCadastro($row) {
+    http_response_code(201);
+    return json_encode([
+        "status" => "sucesso",
+        "mensagem" => "Cadastro realizado com sucesso",
         "usuario" => [
-            "id" => $insert->insert_id,
-            "email" => $email
+            "id" => $row["id"],
+            "email" => $row["email"]
         ]
-    ], 200);
+    ]);
 }
 
-if (!password_verify($senha, $usuario["senha"])) {
-    erro("Credenciais invalidas ou e-mail ja cadastrado.", 401);
+function resultadoExiste($result) {
+    if ($result && $result->num_rows === 1) {
+        $resultado_existe = true;
+    } else {
+        $resultado_existe = false;
+    }
+    return $resultado_existe;
 }
 
-sucesso("Autenticacao realizada com sucesso", [
-    "usuario" => [
-        "id" => (int)$usuario["id"],
-        "email" => $usuario["email"]
-    ]
-], 200);
+function cadastrarUsuario($email, $senha, $resposta = true) {
+    global $conn;
+
+    $stmt = $conn->prepare("INSERT INTO usuario (email, senha) VALUES (?, ?)");
+    if (!$stmt) {
+        erro("Falha ao preparar consulta", 500);
+        sair($conn);
+    }
+
+    $senha_hash = hash("sha256", $senha);
+
+    $stmt->bind_param("ss", $email, $senha_hash);
+    if ($stmt->execute()) {
+        if ($resposta) {
+            $row = $stmt->get_result()->fetch_assoc();
+            http_response_code(201);
+            echo respostaCadastro($row);
+        }
+    } else {
+        erro("Falha na execução do cadastro", 500);
+        sair($conn);
+    }
+}
+
+function acaoCadastro($email, $senha, $resposta = true) {
+    $result = buscarUsuarioPorEmail($email);
+    $usuario_existe = resultadoExiste($result);
+
+    if ($usuario_existe) {
+        erro("Credenciais inválidas ou e-mail já cadastrado.", 400);
+    } else {
+        cadastrarUsuario($email, $senha, $resposta);
+    }
+}
+
+$data = json_decode(file_get_contents("php://input"), true);
+
+$email = isset($data["email"]) ? $data["email"] : null;
+$senha = isset($data["senha"]) ? $data["senha"] : null;
+$acao = isset($data["acao"]) ? $data["acao"] : null;
+    
+
+if ($acao == "cadastro") {
+    acaoCadastro($email, $senha);
+} else if ($acao == "login") {
+    $result = buscarUsuarioPorEmailESenha($email, $senha);
+    $usuario_existe = resultadoExiste($result);
+
+    if ($usuario_existe) {
+        $row = $result->fetch_assoc();
+        echo respostaLogin($row);
+    } else {
+        acaoCadastro($email, $senha, false);
+        $result = buscarUsuarioPorEmailESenha($email, $senha);
+        $row = $result->fetch_assoc();
+        echo respostaLogin($row);
+    }
+} else {
+    erro("Ação inválida", 400);
+    sair($conn);
+}
