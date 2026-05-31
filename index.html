@@ -40,5 +40,35 @@
         .then(response => response.json())
         .then(data => {console.log(data);})
     }
+
+    async function salvarEvento(id_usuario, nome_disciplina, descricao_atividade, data_entrega) {
+        await fetch("salvar_evento.php", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                id_usuario: id_usuario,
+                nome_disciplina: nome_disciplina,
+                descricao_atividade: descricao_atividade,
+                data_entrega: data_entrega
+            })
+        })
+        .then(response => response.json())
+        .then(data => {console.log(data);})
+    }
+
+    async function listarEventos(id_usuario) {
+        await fetch(`listar_eventos.php?id_usuario=${id_usuario}`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        })
+        .then(response => response.json())
+        .then(data => {console.log(data);})
+    }
+
+    listarEventos(1);
 </script>
 </html>
