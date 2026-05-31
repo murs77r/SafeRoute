@@ -4,20 +4,28 @@ header("Content-Type: application/json; charset=UTF-8");
 include "conexao.php";
 include "funcoes.php";
 
-$id_usuario = isset($_GET["id_usuario"]) ? $_GET["id_usuario"] : null;
-$limit = isset($_GET["limit"]) ? $_GET["limit"] : 3;
+$id_usuario = isset($_GET["usuario_id"]) ? $_GET["usuario_id"] : (isset($_GET["id_usuario"]) ? $_GET["id_usuario"] : null);
+$limit = isset($_GET["limit"]) && $_GET["limit"] !== "" ? (int) $_GET["limit"] : null;
 
 function listarEventos($id_usuario, $limit) {
     global $conn;
 
-    $stmt = $conn->prepare("SELECT id, nome_disciplina, descricao_atividade, data_entrega FROM evento WHERE id_usuario = ? ORDER BY data_entrega ASC LIMIT ?");
+    if ($limit === null) {
+        $stmt = $conn->prepare("SELECT id, nome_disciplina, descricao_atividade, data_entrega FROM eventos WHERE usuario_id = ? ORDER BY data_entrega ASC");
+    } else {
+        $stmt = $conn->prepare("SELECT id, nome_disciplina, descricao_atividade, data_entrega FROM eventos WHERE usuario_id = ? ORDER BY data_entrega ASC LIMIT ?");
+    }
 
     if (!$stmt) {
         erro("Falha ao preparar consulta", 500);
         sair($conn);
     }
 
-    $stmt->bind_param("ii", $id_usuario, $limit);
+    if ($limit === null) {
+        $stmt->bind_param("i", $id_usuario);
+    } else {
+        $stmt->bind_param("ii", $id_usuario, $limit);
+    }
 
     if ($stmt->execute()) {
         $result = $stmt->get_result();

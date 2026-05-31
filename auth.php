@@ -7,7 +7,7 @@ include "funcoes.php";
 function buscarUsuarioPorEmail($email) {
     global $conn;
 
-    $stmt = $conn->prepare("SELECT id, email FROM usuario WHERE email = ?");
+    $stmt = $conn->prepare("SELECT id, email FROM usuarios WHERE email = ?");
 
     if (!$stmt) {
         erro("Falha ao preparar consulta", 500);
@@ -23,7 +23,7 @@ function buscarUsuarioPorEmail($email) {
 function buscarUsuarioPorEmailESenha($email, $senha) {
     global $conn;
 
-    $stmt = $conn->prepare("SELECT id, email FROM usuario WHERE email = ? AND senha = ?");
+    $stmt = $conn->prepare("SELECT id, email FROM usuarios WHERE email = ? AND senha = ?");
 
     if (!$stmt) {
         erro("Falha ao preparar consulta", 500);
@@ -42,7 +42,7 @@ function respostaLogin($row) {
     http_response_code(200);
     return json_encode([
         "status" => "sucesso",
-        "mensagem" => "Autenticação realizada com sucesso",
+        "mensagem" => "Login realizado com sucesso.",
         "usuario" => [
             "id" => $row["id"],
             "email" => $row["email"]
@@ -54,7 +54,7 @@ function respostaCadastro($row) {
     http_response_code(201);
     return json_encode([
         "status" => "sucesso",
-        "mensagem" => "Cadastro realizado com sucesso",
+        "mensagem" => "Cadastro realizado com sucesso.",
         "usuario" => [
             "id" => $row["id"],
             "email" => $row["email"]
@@ -74,7 +74,7 @@ function resultadoExiste($result) {
 function cadastrarUsuario($email, $senha, $resposta = true) {
     global $conn;
 
-    $stmt = $conn->prepare("INSERT INTO usuario (email, senha) VALUES (?, ?)");
+    $stmt = $conn->prepare("INSERT INTO usuarios (email, senha) VALUES (?, ?)");
     if (!$stmt) {
         erro("Falha ao preparar consulta", 500);
         sair($conn);
@@ -85,8 +85,10 @@ function cadastrarUsuario($email, $senha, $resposta = true) {
     $stmt->bind_param("ss", $email, $senha_hash);
     if ($stmt->execute()) {
         if ($resposta) {
-            $row = $stmt->get_result()->fetch_assoc();
-            http_response_code(201);
+            $row = [
+                "id" => $conn->insert_id,
+                "email" => $email
+            ];
             echo respostaCadastro($row);
         }
     } else {
