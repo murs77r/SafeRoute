@@ -50,18 +50,6 @@ function respostaLogin($row) {
     ]);
 }
 
-function respostaCadastro($row) {
-    http_response_code(201);
-    return json_encode([
-        "status" => "sucesso",
-        "mensagem" => "Cadastro realizado com sucesso.",
-        "usuario" => [
-            "id" => $row["id"],
-            "email" => $row["email"]
-        ]
-    ]);
-}
-
 function resultadoExiste($result) {
     if ($result && $result->num_rows === 1) {
         $resultado_existe = true;
@@ -71,7 +59,7 @@ function resultadoExiste($result) {
     return $resultado_existe;
 }
 
-function cadastrarUsuario($email, $senha, $resposta = true) {
+function cadastrarUsuario($email, $senha) {
     global $conn;
 
     $stmt = $conn->prepare("INSERT INTO usuarios (email, senha) VALUES (?, ?)");
@@ -84,28 +72,29 @@ function cadastrarUsuario($email, $senha, $resposta = true) {
 
     $stmt->bind_param("ss", $email, $senha_hash);
     if ($stmt->execute()) {
-        if ($resposta) {
-            $row = [
-                "id" => $conn->insert_id,
-                "email" => $email
-            ];
-            echo respostaCadastro($row);
-        }
+        return [
+            "id" => $conn->insert_id,
+            "email" => $email
+        ];
     } else {
-        erro("Falha na execução do cadastro", 500);
+        erro("Falha ao criar usuário", 500);
         sair($conn);
     }
 }
 
-function acaoCadastro($email, $senha, $resposta = true) {
-    $result = buscarUsuarioPorEmail($email);
-    $usuario_existe = resultadoExiste($result);
+function autenticarUsuario($email, $senha) {
+    $result = buscarUsuarioPorEmailESenha($email, $senha);
 
-    if ($usuario_existe) {
-        erro("Credenciais inválidas ou e-mail já cadastrado.", 400);
-    } else {
-        cadastrarUsuario($email, $senha, $resposta);
+    if (resultadoExiste($result)) {
+        return $result->fetch_assoc();
     }
+
+    $usuario = buscarUsuarioPorEmail($email);
+    if (resultadoExiste($usuario)) {
+        erro("Credenciais inválidas.", 401);
+    }
+
+    return cadastrarUsuario($email, $senha);
 }
 
 $data = json_decode(file_get_contents("php://input"), true);
@@ -115,22 +104,13 @@ $senha = isset($data["senha"]) ? $data["senha"] : null;
 $acao = isset($data["acao"]) ? $data["acao"] : null;
     
 
-if ($acao == "cadastro") {
-    acaoCadastro($email, $senha);
-} else if ($acao == "login") {
-    $result = buscarUsuarioPorEmailESenha($email, $senha);
-    $usuario_existe = resultadoExiste($result);
-
-    if ($usuario_existe) {
-        $row = $result->fetch_assoc();
-        echo respostaLogin($row);
-    } else {
-        acaoCadastro($email, $senha, false);
-        $result = buscarUsuarioPorEmailESenha($email, $senha);
-        $row = $result->fetch_assoc();
-        echo respostaLogin($row);
-    }
-} else {
-    erro("Ação inválida", 400);
-    sair($conn);
+if (!$email || !$senha) {
+    erro("E-mail e senha são obrigatórios.", 400);
 }
+
+if ($acao !== "login") {
+    erro("Ação inválida. Use \"login\".", 400);
+}
+
+$row = autenticarUsuario($email, $senha);
+echo respostaLogin($row);

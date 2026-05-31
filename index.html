@@ -9,22 +9,6 @@
     <h1>SafeRoute</h1>
 </body>
 <script>
-    async function cadastroUsuario(email, senha) {
-        await fetch("auth.php", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                email: email,
-                senha: senha,
-                acao: "cadastro"
-            })
-        })
-        .then(response => response.json())
-        .then(data => {console.log(data);})
-    }
-    
     async function loginUsuario(email, senha) {
         await fetch("auth.php", {
             method: "POST",

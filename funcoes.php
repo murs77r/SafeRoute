@@ -5,6 +5,8 @@ function erro($mensagem, $codigo = 400) {
         "status" => "erro",
         "mensagem" => $mensagem
     ]);
+
+    exit;
 }
 
 function sair($con) {

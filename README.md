@@ -12,21 +12,21 @@ Body JSON:
 {
 	"email": "String",
 	"senha": "String",
-	"acao": "login | cadastro"
+	"acao": "login"
 }
 ```
 
 Regras:
 
-- `cadastro`: cria conta se o e-mail nao existir; se existir, retorna erro.
 - `login`: autentica se existir e senha estiver correta; se o e-mail nao existir, cria automaticamente.
+- nao existe acao separada de cadastro; o primeiro login cria a conta.
 
 Resposta de sucesso (200):
 
 ```json
 {
 	"status": "sucesso",
-	"mensagem": "Autenticacao realizada com sucesso",
+	"mensagem": "Login realizado com sucesso.",
 	"usuario": {
 		"id": 12,
 		"email": "pessoal@email.com"
