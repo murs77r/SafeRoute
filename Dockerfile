@@ -1,13 +1,12 @@
-FROM php:8.3-apache
+FROM php:8.3-cli
 
 # Extensoes necessarias para MySQL no projeto
-RUN docker-php-ext-install mysqli pdo pdo_mysql \
-    && a2dismod mpm_event mpm_worker || true \
-    && a2enmod mpm_prefork rewrite headers
+RUN docker-php-ext-install mysqli pdo pdo_mysql
 
 WORKDIR /var/www/html
 COPY . /var/www/html
 
 EXPOSE 80
 
-# Apache inicia automaticamente pelo entrypoint da imagem base
+# Railway injeta PORT automaticamente; local usa 80 por padrao
+CMD ["sh", "-c", "php -S 0.0.0.0:${PORT:-80} -t /var/www/html"]

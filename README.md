@@ -99,3 +99,17 @@ Configuracao opcional por variaveis de ambiente (somente banco):
 - `DB_USER` (padrao: `root`)
 - `DB_PASSWORD` (padrao: vazio)
 - `DB_NAME` (padrao: `saferoute`)
+
+## Docker
+
+Build:
+
+```bash
+docker build -t saferoute-php .
+```
+
+Run local:
+
+```bash
+docker run --rm -p 8080:80 saferoute-php
+```
